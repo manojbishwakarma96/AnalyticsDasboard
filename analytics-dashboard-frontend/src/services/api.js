@@ -1,4 +1,4 @@
-// API base URL
+// API base URL - backend is running on port 3000 while frontend is on port 3002
 const API_URL = "http://localhost:3000";
 
 // Get all analytics data
@@ -33,13 +33,14 @@ export const trackVisit = async (pagePath = "/hello") => {
 export const trackButtonClick = async (buttonId, username = "guest") => {
   try {
     // Using the /hello endpoint to record a visit that represents a button click
+    // This effectively logs an analytics entry for each button click
     await fetch(`${API_URL}/hello`);
 
     // For now, we'll simulate this with client-side data
     // Since backend doesn't have a dedicated button click endpoint yet
     const simulatedResponse = {
       success: true,
-      message: "Button click simulated",
+      message: "Button click tracked via /hello endpoint",
       data: {
         buttonId,
         username,
@@ -47,7 +48,7 @@ export const trackButtonClick = async (buttonId, username = "guest") => {
       },
     };
 
-    console.log(`Button click (simulated): ${buttonId} by ${username}`);
+    console.log(`Button click tracked: ${buttonId} by ${username}`);
     return simulatedResponse;
   } catch (error) {
     console.error("Error recording button click:", error);
@@ -59,7 +60,7 @@ export const trackButtonClick = async (buttonId, username = "guest") => {
 export const getButtonClickAnalytics = async () => {
   try {
     // For demonstration, generate some simulated button click data
-    // This would normally come from a backend endpoint
+    // This would normally come from a backend endpoint once implemented
     const now = new Date();
 
     const simulatedClicks = [

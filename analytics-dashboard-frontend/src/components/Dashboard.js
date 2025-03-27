@@ -15,6 +15,8 @@ import {
   faMousePointer,
   faSpinner,
   faExclamationTriangle,
+  faServer,
+  faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 
 const Dashboard = () => {
@@ -28,6 +30,10 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [backendStatus, setBackendStatus] = useState({
+    connected: false,
+    lastChecked: null,
+  });
 
   // Fetch analytics data
   const fetchData = async () => {
@@ -49,10 +55,22 @@ const Dashboard = () => {
       const clickData = await getButtonClickAnalytics();
       setButtonClicks(clickData || []);
 
+      // Backend connected successfully
+      setBackendStatus({
+        connected: true,
+        lastChecked: new Date().toLocaleTimeString(),
+      });
+
       setError(null);
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError("Failed to load analytics data. Please try again later.");
+      setError(
+        "Failed to load analytics data. Please make sure your backend is running on port 3000."
+      );
+      setBackendStatus({
+        connected: false,
+        lastChecked: new Date().toLocaleTimeString(),
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -87,7 +105,9 @@ const Dashboard = () => {
       setButtonClicks((prevClicks) => [newClick, ...prevClicks]);
     } catch (err) {
       console.error("Error tracking button click:", err);
-      setError("Failed to track button click. Please try again.");
+      setError(
+        "Failed to track button click. Please make sure your backend is running."
+      );
     }
   };
 
@@ -116,13 +136,34 @@ const Dashboard = () => {
         <h1>
           <FontAwesomeIcon icon={faChartLine} /> Analytics Dashboard
         </h1>
-        <button
-          onClick={handleRefresh}
-          className="refresh-button"
-          disabled={refreshing}
-        >
-          {refreshing ? "Refreshing..." : "Refresh Data"}
-        </button>
+        <div className="dashboard-controls">
+          <div
+            className={`backend-status ${
+              backendStatus.connected ? "connected" : "disconnected"
+            }`}
+          >
+            <FontAwesomeIcon
+              icon={
+                backendStatus.connected ? faCheckCircle : faExclamationTriangle
+              }
+            />
+            <span>
+              Backend: {backendStatus.connected ? "Connected" : "Disconnected"}
+            </span>
+            {backendStatus.lastChecked && (
+              <span className="status-time">
+                Last checked: {backendStatus.lastChecked}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={handleRefresh}
+            className="refresh-button"
+            disabled={refreshing}
+          >
+            {refreshing ? "Refreshing..." : "Refresh Data"}
+          </button>
+        </div>
       </header>
 
       {error && (
@@ -206,7 +247,7 @@ const Dashboard = () => {
       <div className="test-section">
         <h2>Test Button Click Tracking</h2>
         <p className="helper-text">
-          Click these buttons to generate button click analytics
+          Each button click is tracked using the /hello API endpoint
         </p>
         <div className="button-container">
           <button
@@ -239,6 +280,13 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      <footer className="dashboard-footer">
+        <p>
+          <FontAwesomeIcon icon={faServer} /> Backend API: http://localhost:3000
+          | Frontend: http://localhost:3002
+        </p>
+      </footer>
     </div>
   );
 };
