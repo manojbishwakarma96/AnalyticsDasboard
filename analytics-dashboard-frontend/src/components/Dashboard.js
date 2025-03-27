@@ -1,79 +1,62 @@
 import React, { useState, useEffect } from "react";
-import { getAnalyticsData, getButtonClickAnalytics } from "../services/api";
+import {
+  getAnalyticsData,
+  getButtonClickAnalytics,
+  trackVisit,
+} from "../services/api";
 import "./Dashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faHome,
+  faInfoCircle,
   faUser,
   faChartLine,
   faClock,
   faMousePointer,
   faSpinner,
   faExclamationTriangle,
-  faServer,
   faCheckCircle,
-  faPieChart,
-  faChartBar,
+  faRefresh,
+  faDownload,
+  faShareAlt,
+  faTachometerAlt,
   faCog,
   faSignOutAlt,
-  faTachometerAlt,
-  faList,
+  faFileAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import VisitsLineChart from "./charts/VisitsLineChart";
 import ButtonClicksPieChart from "./charts/ButtonClicksPieChart";
-import StatisticsCards from "./StatisticsCards";
-import Navigation from "./Navigation";
 import InteractiveButton from "./InteractiveButton";
 
 const Dashboard = () => {
-  const [analytics, setAnalytics] = useState({
-    username: "Guest",
-    totalHits: 0,
-    timestamps: [],
-  });
-
+  const [analyticsData, setAnalyticsData] = useState(null);
   const [buttonClicks, setButtonClicks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [backendConnected, setBackendConnected] = useState(false);
+  const [lastChecked, setLastChecked] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [backendStatus, setBackendStatus] = useState({
-    connected: false,
-    lastChecked: null,
-  });
-  const [activeNavItem, setActiveNavItem] = useState("/analytics");
+  const [activePage, setActivePage] = useState("home");
 
-  // Fetch analytics data
   const fetchData = async () => {
+    setRefreshing(true);
     try {
-      setRefreshing(true);
-
       // Fetch analytics data
       const data = await getAnalyticsData();
-      setAnalytics({
-        username: data.username || "Guest",
-        totalHits: data.totalHits || 0,
-        timestamps: data.timestamps || [],
-      });
+      setAnalyticsData(data);
+      setBackendConnected(true);
 
-      // Fetch button click data from localStorage
-      const clickData = await getButtonClickAnalytics();
-      setButtonClicks(clickData);
+      // Fetch button click data
+      const buttonData = await getButtonClickAnalytics();
+      setButtonClicks(buttonData);
 
-      // Backend connected successfully
-      setBackendStatus({
-        connected: true,
-        lastChecked: new Date().toLocaleTimeString(),
-      });
-
+      setLastChecked(new Date());
       setError(null);
     } catch (err) {
       console.error("Error fetching data:", err);
       setError(
-        "Failed to load analytics data. Please make sure your backend is running on port 3000."
+        "Failed to connect to backend server. Please check your connection."
       );
-      setBackendStatus({
-        connected: false,
-        lastChecked: new Date().toLocaleTimeString(),
-      });
+      setBackendConnected(false);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -82,34 +65,32 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
-
-    // Set up interval to refresh data every 30 seconds
-    const interval = setInterval(fetchData, 30000);
-
-    // Clean up interval on component unmount
-    return () => clearInterval(interval);
   }, []);
 
-  // Handle button click callback
-  const handleButtonClick = async (buttonId) => {
-    // Refresh the analytics data to show the updated hits
-    fetchData();
-  };
-
-  // Handle navigation
-  const handleNavigation = (route) => {
-    setActiveNavItem(route);
-    // Refresh analytics data after navigation
-    fetchData();
-  };
-
-  // Format timestamp for display
   const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleString();
+    const date = new Date(timestamp);
+    return date.toLocaleString();
   };
 
-  // Manual refresh handler
-  const handleRefresh = () => {
+  const handleNavigation = async (page) => {
+    setActivePage(page);
+    try {
+      // Track the visit to the page
+      if (page === "home") {
+        await trackVisit("/hello");
+      } else if (page === "about") {
+        await trackVisit("/about");
+      }
+
+      // Refresh data after navigation
+      fetchData();
+    } catch (err) {
+      console.error(`Error navigating to ${page}:`, err);
+    }
+  };
+
+  const handleButtonClick = (buttonId) => {
+    // Refresh data to show new button click
     fetchData();
   };
 
@@ -122,329 +103,414 @@ const Dashboard = () => {
     );
   }
 
+  const handleRefresh = () => {
+    fetchData();
+  };
+
   return (
     <div className="dashboard">
+      {/* Top Navigation Bar */}
       <header className="dashboard-header">
-        <h1>
-          <FontAwesomeIcon icon={faChartLine} /> Analytics Dashboard
-        </h1>
+        <div className="logo-container">
+          <FontAwesomeIcon
+            icon={faTachometerAlt}
+            size="lg"
+            className="logo-icon"
+          />
+          <h1>Analytics Dashboard</h1>
+        </div>
+        <div className="navigation-menu">
+          <button
+            className={`nav-button ${activePage === "home" ? "active" : ""}`}
+            onClick={() => handleNavigation("home")}
+          >
+            <FontAwesomeIcon icon={faHome} /> Home
+          </button>
+          <button
+            className={`nav-button ${activePage === "about" ? "active" : ""}`}
+            onClick={() => handleNavigation("about")}
+          >
+            <FontAwesomeIcon icon={faInfoCircle} /> About
+          </button>
+        </div>
         <div className="dashboard-controls">
           <div
             className={`backend-status ${
-              backendStatus.connected ? "connected" : "disconnected"
+              backendConnected ? "connected" : "disconnected"
             }`}
           >
             <FontAwesomeIcon
-              icon={
-                backendStatus.connected ? faCheckCircle : faExclamationTriangle
-              }
+              icon={backendConnected ? faCheckCircle : faExclamationTriangle}
             />
-            <span>
-              Backend: {backendStatus.connected ? "Connected" : "Disconnected"}
-            </span>
-            {backendStatus.lastChecked && (
-              <span className="status-time">
-                Last checked: {backendStatus.lastChecked}
-              </span>
-            )}
+            <span>{backendConnected ? "Connected" : "Disconnected"}</span>
           </div>
           <button
-            onClick={handleRefresh}
             className="refresh-button"
+            onClick={handleRefresh}
             disabled={refreshing}
           >
-            {refreshing ? "Refreshing..." : "Refresh Data"}
+            <FontAwesomeIcon icon={faRefresh} spin={refreshing} />
+            {refreshing ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </header>
 
-      {error && (
-        <div className="error-message">
-          <FontAwesomeIcon icon={faExclamationTriangle} /> {error}
+      {/* Status info bar */}
+      <div className="status-bar">
+        <div className="status-info">
+          <span className="status-label">Last updated:</span>
+          <span className="status-value">
+            {lastChecked ? formatTimestamp(lastChecked) : "Never"}
+          </span>
         </div>
-      )}
-
-      {/* New Navigation Component */}
-      <Navigation onNavigate={handleNavigation} activeRoute={activeNavItem} />
-
-      {/* Statistics Cards Section */}
-      <StatisticsCards analytics={analytics} buttonClicks={buttonClicks} />
-
-      <div className="charts-container">
-        {/* Visits Line Chart */}
-        <div className="chart-card">
-          <h2>
-            <FontAwesomeIcon icon={faChartBar} /> Visits Over Time
-          </h2>
-          <div className="chart-container">
-            <VisitsLineChart timestamps={analytics.timestamps || []} />
+        {error && (
+          <div className="error-message">
+            <FontAwesomeIcon icon={faExclamationTriangle} /> {error}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Dashboard Cards Container */}
-      <div className="dashboard-container">
-        <div className="dashboard-card">
-          <h2>
-            <FontAwesomeIcon icon={faUser} /> User Information
-          </h2>
-          <div className="user-info">
-            <div className="info-item">
-              <span className="info-label">Username:</span>
-              <span className="info-value">{analytics.username}</span>
+      {/* Main content area */}
+      <main className="dashboard-content">
+        {/* Summary Cards Row */}
+        <div className="summary-cards">
+          {/* User Information Card */}
+          <div className="summary-card">
+            <div className="card-icon-container">
+              <FontAwesomeIcon icon={faUser} className="card-icon" />
+            </div>
+            <div className="card-content">
+              <h3>User</h3>
+              <div className="card-value">
+                {analyticsData?.username || "Guest"}
+              </div>
+            </div>
+          </div>
+
+          {/* Total Hits Card */}
+          <div className="summary-card">
+            <div className="card-icon-container accent-blue">
+              <FontAwesomeIcon icon={faChartLine} className="card-icon" />
+            </div>
+            <div className="card-content">
+              <h3>Total Hits</h3>
+              <div className="card-value highlight">
+                {analyticsData?.hits || 0}
+              </div>
+            </div>
+          </div>
+
+          {/* Button Clicks Card */}
+          <div className="summary-card">
+            <div className="card-icon-container accent-orange">
+              <FontAwesomeIcon icon={faMousePointer} className="card-icon" />
+            </div>
+            <div className="card-content">
+              <h3>Button Clicks</h3>
+              <div className="card-value highlight">
+                {buttonClicks?.length || 0}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="dashboard-card">
-          <h2>
-            <FontAwesomeIcon icon={faChartLine} /> Visit Analytics
-          </h2>
-          <div className="analytics-info">
-            <div className="info-item highlight">
-              <span className="info-label">Total Hits:</span>
-              <span className="info-value counter">{analytics.totalHits}</span>
+        {/* Main Dashboard Grid */}
+        <div className="dashboard-grid">
+          <div className="dashboard-card recent-visits">
+            <div className="card-header">
+              <h2>
+                <FontAwesomeIcon icon={faClock} /> Recent Visits
+              </h2>
             </div>
-          </div>
-        </div>
-
-        <div className="dashboard-card">
-          <h2>
-            <FontAwesomeIcon icon={faClock} /> Recent Visits
-          </h2>
-          <div className="timestamps">
-            {analytics.timestamps && analytics.timestamps.length > 0 ? (
-              <ul className="timestamp-list">
-                {analytics.timestamps.map((timestamp, index) => (
-                  <li key={index} className="timestamp-item">
-                    <span className="timestamp-value">
-                      {formatTimestamp(timestamp)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="no-data">No visit data available</p>
-            )}
-          </div>
-        </div>
-
-        <div className="dashboard-card">
-          <h2>
-            <FontAwesomeIcon icon={faMousePointer} /> Button Click Analytics
-          </h2>
-          <div className="button-analytics">
-            {buttonClicks.length > 0 ? (
-              <div>
-                <div className="info-item highlight">
-                  <span className="info-label">Total Button Clicks:</span>
-                  <span className="info-value counter">
-                    {buttonClicks.length}
-                  </span>
-                </div>
-                <ul className="button-click-list">
-                  {buttonClicks.slice(0, 5).map((click, index) => (
-                    <li key={index} className="button-click-item">
-                      <div className="click-badge">{click.buttonId}</div>
-                      <div className="click-details">
-                        <span className="click-user">{click.username}</span>
-                        <span className="click-time">
-                          {formatTimestamp(click.timestamp)}
+            <div className="card-body">
+              <div className="timestamps">
+                {analyticsData?.timestamps &&
+                analyticsData.timestamps.length > 0 ? (
+                  <ul className="timestamp-list">
+                    {analyticsData.timestamps.map((timestamp, index) => (
+                      <li key={index} className="timestamp-item">
+                        <span className="timestamp-value">
+                          {formatTimestamp(timestamp)}
                         </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                {buttonClicks.length > 5 && (
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="no-data">No visit data available</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Button Click Analytics Card */}
+          <div className="dashboard-card button-clicks">
+            <div className="card-header">
+              <h2>
+                <FontAwesomeIcon icon={faMousePointer} /> Button Click Analytics
+              </h2>
+            </div>
+            <div className="card-body">
+              <div className="button-analytics">
+                {buttonClicks && buttonClicks.length > 0 ? (
+                  <ul className="button-click-list">
+                    {buttonClicks.slice(0, 8).map((click, index) => (
+                      <li key={index} className="button-click-item">
+                        <div className="click-badge">{click.buttonId}</div>
+                        <div className="click-details">
+                          <span className="click-user">
+                            {click.username || "Guest"}
+                          </span>
+                          <span className="click-time">
+                            {formatTimestamp(click.timestamp)}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="no-data">No button click data available</div>
+                )}
+
+                {buttonClicks && buttonClicks.length > 8 && (
                   <div className="view-more-link">
-                    <a href="#" onClick={(e) => e.preventDefault()}>
-                      View all {buttonClicks.length} clicks
-                    </a>
+                    <a href="#">View all {buttonClicks.length} button clicks</a>
                   </div>
                 )}
               </div>
-            ) : (
-              <p className="no-data">No button click data available</p>
-            )}
+            </div>
+          </div>
+
+          {/* Button Click Distribution Chart */}
+          <div className="dashboard-card chart-card">
+            <div className="card-header">
+              <h2>
+                <FontAwesomeIcon icon={faChartLine} /> Button Click Distribution
+              </h2>
+            </div>
+            <div className="card-body">
+              <div className="chart-container">
+                {buttonClicks && buttonClicks.length > 0 ? (
+                  <ButtonClicksPieChart buttonClicks={buttonClicks} />
+                ) : (
+                  <div className="no-data">
+                    Not enough data to generate chart
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Button Analytics Section - Side by Side */}
-      <div className="button-analytics-section">
-        {/* Button Click Distribution Chart */}
-        <div className="chart-card button-distribution">
-          <h2>
-            <FontAwesomeIcon icon={faPieChart} /> Button Click Distribution
-          </h2>
-          <div className="chart-container">
-            <ButtonClicksPieChart buttonClicks={buttonClicks || []} />
+        {/* Interactive Buttons Section */}
+        <div className="interactive-section">
+          <div className="section-header">
+            <h2>
+              <FontAwesomeIcon icon={faMousePointer} /> Interactive Buttons
+            </h2>
+            <p className="section-description">
+              Click on these buttons to test the button click tracking feature.
+              Each click is recorded with the button ID, timestamp, and user
+              information.
+            </p>
           </div>
-        </div>
-
-        {/* Button Click Tracking Cards */}
-        <div className="test-section button-tracking">
-          <h2>
-            <FontAwesomeIcon icon={faMousePointer} /> Button Click Tracking
-          </h2>
-          <p className="helper-text">
-            Track user interactions with beautiful, interactive cards. Each
-            click is recorded with unique identifiers and timestamps.
-          </p>
-          <div className="button-container">
-            <div className="action-card primary">
+          <div className="buttons-grid">
+            <div className="button-card">
               <div className="card-header">
-                <FontAwesomeIcon
-                  icon={faTachometerAlt}
-                  className="card-header-icon"
-                />
-                <h3>Dashboard</h3>
+                <h3>
+                  <FontAwesomeIcon icon={faDownload} /> Data Export
+                </h3>
               </div>
               <div className="card-body">
-                <p className="card-description">
-                  Access analytics dashboard with comprehensive metrics and data
-                  visualization.
-                </p>
+                <p>Export your analytics data to CSV format</p>
                 <InteractiveButton
-                  id="dashboard-btn"
+                  id="export-data-btn"
                   color="primary"
-                  icon={faTachometerAlt}
-                  username={analytics.username}
+                  icon={faDownload}
+                  username={analyticsData?.username || "Guest"}
                   onClickSuccess={handleButtonClick}
                 >
-                  Access Dashboard
+                  Export Data
                 </InteractiveButton>
               </div>
               <div className="card-footer">
-                <div className="stats-count">
-                  <span>Popularity:</span>
-                  <span className="count">
+                <div className="click-counter">
+                  <span className="counter-label">Clicks:</span>
+                  <span className="counter-value">
                     {
                       buttonClicks.filter(
-                        (click) => click.buttonId === "dashboard-btn"
+                        (click) => click.buttonId === "export-data-btn"
                       ).length
-                    }{" "}
-                    clicks
+                    }
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="action-card success">
+            <div className="button-card">
               <div className="card-header">
-                <FontAwesomeIcon icon={faList} className="card-header-icon" />
-                <h3>Reports</h3>
+                <h3>
+                  <FontAwesomeIcon icon={faShareAlt} /> Share Report
+                </h3>
               </div>
               <div className="card-body">
-                <p className="card-description">
-                  Generate detailed reports and export analytics data for your
-                  presentations.
-                </p>
+                <p>Share your analytics report with your team</p>
                 <InteractiveButton
-                  id="reports-btn"
+                  id="share-report-btn"
                   color="success"
-                  icon={faList}
-                  username={analytics.username}
+                  icon={faShareAlt}
+                  username={analyticsData?.username || "Guest"}
                   onClickSuccess={handleButtonClick}
                 >
-                  Generate Reports
+                  Share Report
                 </InteractiveButton>
               </div>
               <div className="card-footer">
-                <div className="stats-count">
-                  <span>Popularity:</span>
-                  <span className="count">
+                <div className="click-counter">
+                  <span className="counter-label">Clicks:</span>
+                  <span className="counter-value">
+                    {
+                      buttonClicks.filter(
+                        (click) => click.buttonId === "share-report-btn"
+                      ).length
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="button-card">
+              <div className="card-header">
+                <h3>
+                  <FontAwesomeIcon icon={faChartLine} /> Generate Insights
+                </h3>
+              </div>
+              <div className="card-body">
+                <p>Generate AI-powered insights from your data</p>
+                <InteractiveButton
+                  id="generate-insights-btn"
+                  color="warning"
+                  icon={faChartLine}
+                  username={analyticsData?.username || "Guest"}
+                  onClickSuccess={handleButtonClick}
+                >
+                  Generate Insights
+                </InteractiveButton>
+              </div>
+              <div className="card-footer">
+                <div className="click-counter">
+                  <span className="counter-label">Clicks:</span>
+                  <span className="counter-value">
+                    {
+                      buttonClicks.filter(
+                        (click) => click.buttonId === "generate-insights-btn"
+                      ).length
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Additional Button Row */}
+          <div className="buttons-grid additional-buttons">
+            <div className="button-card">
+              <div className="card-header">
+                <h3>
+                  <FontAwesomeIcon icon={faFileAlt} /> Reports
+                </h3>
+              </div>
+              <div className="card-body">
+                <p>View and generate detailed analytics reports</p>
+                <InteractiveButton
+                  id="reports-btn"
+                  color="info"
+                  icon={faFileAlt}
+                  username={analyticsData?.username || "Guest"}
+                  onClickSuccess={handleButtonClick}
+                >
+                  View Reports
+                </InteractiveButton>
+              </div>
+              <div className="card-footer">
+                <div className="click-counter">
+                  <span className="counter-label">Clicks:</span>
+                  <span className="counter-value">
                     {
                       buttonClicks.filter(
                         (click) => click.buttonId === "reports-btn"
                       ).length
-                    }{" "}
-                    clicks
+                    }
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="action-card warning">
+            <div className="button-card">
               <div className="card-header">
-                <FontAwesomeIcon icon={faCog} className="card-header-icon" />
-                <h3>Settings</h3>
+                <h3>
+                  <FontAwesomeIcon icon={faCog} /> Settings
+                </h3>
               </div>
               <div className="card-body">
-                <p className="card-description">
-                  Configure your analytics preferences and account settings.
-                </p>
+                <p>Configure your dashboard and tracking preferences</p>
                 <InteractiveButton
                   id="settings-btn"
-                  color="warning"
+                  color="secondary"
                   icon={faCog}
-                  username={analytics.username}
+                  username={analyticsData?.username || "Guest"}
                   onClickSuccess={handleButtonClick}
                 >
-                  Adjust Settings
+                  Open Settings
                 </InteractiveButton>
               </div>
               <div className="card-footer">
-                <div className="stats-count">
-                  <span>Popularity:</span>
-                  <span className="count">
+                <div className="click-counter">
+                  <span className="counter-label">Clicks:</span>
+                  <span className="counter-value">
                     {
                       buttonClicks.filter(
                         (click) => click.buttonId === "settings-btn"
                       ).length
-                    }{" "}
-                    clicks
+                    }
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="action-card danger">
+            <div className="button-card">
               <div className="card-header">
-                <FontAwesomeIcon
-                  icon={faSignOutAlt}
-                  className="card-header-icon"
-                />
-                <h3>Logout</h3>
+                <h3>
+                  <FontAwesomeIcon icon={faSignOutAlt} /> Logout
+                </h3>
               </div>
               <div className="card-body">
-                <p className="card-description">
-                  Securely sign out from your analytics dashboard session.
-                </p>
+                <p>Securely sign out from your current session</p>
                 <InteractiveButton
                   id="logout-btn"
                   color="danger"
                   icon={faSignOutAlt}
-                  username={analytics.username}
+                  username={analyticsData?.username || "Guest"}
                   onClickSuccess={handleButtonClick}
                 >
-                  Sign Out
+                  Logout
                 </InteractiveButton>
               </div>
               <div className="card-footer">
-                <div className="stats-count">
-                  <span>Popularity:</span>
-                  <span className="count">
+                <div className="click-counter">
+                  <span className="counter-label">Clicks:</span>
+                  <span className="counter-value">
                     {
                       buttonClicks.filter(
                         (click) => click.buttonId === "logout-btn"
                       ).length
-                    }{" "}
-                    clicks
+                    }
                   </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <footer className="dashboard-footer">
-        <p>
-          <FontAwesomeIcon icon={faServer} /> Backend API: http://localhost:3000
-          | Frontend: http://localhost:3002
-        </p>
-      </footer>
+      </main>
     </div>
   );
 };
