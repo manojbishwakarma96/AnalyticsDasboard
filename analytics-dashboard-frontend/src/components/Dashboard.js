@@ -3,6 +3,7 @@ import {
   getAnalyticsData,
   trackVisit,
   trackButtonClick,
+  getButtonClickAnalytics,
 } from "../services/api";
 import "./Dashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -26,6 +27,7 @@ const Dashboard = () => {
     timestamps: [],
   });
 
+  const [buttonClicks, setButtonClicks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,6 +50,10 @@ const Dashboard = () => {
         totalHits: data.totalHits || 0,
         timestamps: data.timestamps || [],
       });
+
+      // Fetch button click data from localStorage
+      const clickData = await getButtonClickAnalytics();
+      setButtonClicks(clickData);
 
       // Backend connected successfully
       setBackendStatus({
@@ -84,8 +90,8 @@ const Dashboard = () => {
   // Handle button click
   const handleButtonClick = async (buttonId) => {
     try {
-      // Track the button click by calling the /hello endpoint
-      await trackButtonClick(buttonId);
+      // Track the button click with all required attributes
+      await trackButtonClick(buttonId, analytics.username);
 
       // Refresh the analytics data to show the updated hits
       fetchData();
@@ -245,17 +251,32 @@ const Dashboard = () => {
           <h2>
             <FontAwesomeIcon icon={faMousePointer} /> Button Click Analytics
           </h2>
-          <div className="analytics-info">
-            <div className="info-item">
-              <span className="info-label">
-                Button Clicks (included in total hits):
-              </span>
-              <span className="info-value">{analytics.totalHits}</span>
-            </div>
-            <p className="helper-text">
-              Each button click is tracked as a page visit via the /hello
-              endpoint
-            </p>
+          <div className="button-analytics">
+            {buttonClicks.length > 0 ? (
+              <div>
+                <div className="info-item highlight">
+                  <span className="info-label">Total Button Clicks:</span>
+                  <span className="info-value counter">
+                    {buttonClicks.length}
+                  </span>
+                </div>
+                <ul className="button-click-list">
+                  {buttonClicks.map((click, index) => (
+                    <li key={index} className="button-click-item">
+                      <div className="click-badge">{click.buttonId}</div>
+                      <div className="click-details">
+                        <span className="click-user">{click.username}</span>
+                        <span className="click-time">
+                          {formatTimestamp(click.timestamp)}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="no-data">No button click data available</p>
+            )}
           </div>
         </div>
       </div>
@@ -263,7 +284,7 @@ const Dashboard = () => {
       <div className="test-section">
         <h2>Test Button Click Tracking</h2>
         <p className="helper-text">
-          Each button click will increase the total hit count
+          Each button click is tracked with its ID, username, and timestamp
         </p>
         <div className="button-container">
           <button
