@@ -20,10 +20,16 @@ import {
   faInfoCircle,
   faPieChart,
   faChartBar,
+  faCog,
+  faSignOutAlt,
+  faTachometerAlt,
+  faList,
 } from "@fortawesome/free-solid-svg-icons";
 import VisitsLineChart from "./charts/VisitsLineChart";
 import ButtonClicksPieChart from "./charts/ButtonClicksPieChart";
 import StatisticsCards from "./StatisticsCards";
+import Navigation from "./Navigation";
+import InteractiveButton from "./InteractiveButton";
 
 const Dashboard = () => {
   const [analytics, setAnalytics] = useState({
@@ -92,35 +98,17 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle button click
+  // Handle button click callback
   const handleButtonClick = async (buttonId) => {
-    try {
-      // Track the button click with all required attributes
-      await trackButtonClick(buttonId, analytics.username);
-
-      // Refresh the analytics data to show the updated hits
-      fetchData();
-    } catch (err) {
-      console.error("Error tracking button click:", err);
-      setError(
-        "Failed to track button click. Please make sure your backend is running."
-      );
-    }
+    // Refresh the analytics data to show the updated hits
+    fetchData();
   };
 
-  // Handle navigation to backend endpoints
-  const handleNavClick = async (endpoint) => {
-    try {
-      setActiveNavItem(endpoint);
-      setNavResponse("Loading...");
-      const response = await trackVisit(endpoint);
-      setNavResponse(response);
-      // Refresh analytics data after navigation
-      fetchData();
-    } catch (err) {
-      console.error(`Error navigating to ${endpoint}:`, err);
-      setNavResponse(`Error: Could not connect to ${endpoint}`);
-    }
+  // Handle navigation
+  const handleNavigation = (route) => {
+    setActiveNavItem(route);
+    // Refresh analytics data after navigation
+    fetchData();
   };
 
   // Format timestamp for display
@@ -184,27 +172,8 @@ const Dashboard = () => {
         </div>
       )}
 
-      <nav className="backend-nav">
-        <div className="nav-title">Backend Navigation:</div>
-        <ul className="nav-items">
-          <li
-            className={activeNavItem === "/hello" ? "active" : ""}
-            onClick={() => handleNavClick("/hello")}
-          >
-            <FontAwesomeIcon icon={faHome} /> /hello
-          </li>
-          <li
-            className={activeNavItem === "/about" ? "active" : ""}
-            onClick={() => handleNavClick("/about")}
-          >
-            <FontAwesomeIcon icon={faInfoCircle} /> /about
-          </li>
-        </ul>
-        <div className="nav-response">
-          <div className="response-label">Response:</div>
-          <div className="response-content">{navResponse}</div>
-        </div>
-      </nav>
+      {/* New Navigation Component */}
+      <Navigation onNavigate={handleNavigation} activeRoute={activeNavItem} />
 
       {/* Statistics Cards Section */}
       <StatisticsCards analytics={analytics} buttonClicks={buttonClicks} />
@@ -312,39 +281,51 @@ const Dashboard = () => {
       </div>
 
       <div className="test-section">
-        <h2>Test Button Click Tracking</h2>
+        <h2>Enhanced Button Click Tracking</h2>
         <p className="helper-text">
-          Each button click is tracked with its ID, username, and timestamp
+          Each button click is tracked with its ID, username, and timestamp. Now
+          with visual feedback!
         </p>
         <div className="button-container">
-          <button
-            id="test-button-1"
-            className="test-button primary"
-            onClick={() => handleButtonClick("test-button-1")}
+          <InteractiveButton
+            id="dashboard-btn"
+            color="primary"
+            icon={faTachometerAlt}
+            username={analytics.username}
+            onClickSuccess={handleButtonClick}
           >
             Dashboard
-          </button>
-          <button
-            id="test-button-2"
-            className="test-button success"
-            onClick={() => handleButtonClick("test-button-2")}
+          </InteractiveButton>
+
+          <InteractiveButton
+            id="reports-btn"
+            color="success"
+            icon={faList}
+            username={analytics.username}
+            onClickSuccess={handleButtonClick}
           >
             Reports
-          </button>
-          <button
-            id="test-button-3"
-            className="test-button warning"
-            onClick={() => handleButtonClick("test-button-3")}
+          </InteractiveButton>
+
+          <InteractiveButton
+            id="settings-btn"
+            color="warning"
+            icon={faCog}
+            username={analytics.username}
+            onClickSuccess={handleButtonClick}
           >
             Settings
-          </button>
-          <button
-            id="test-button-4"
-            className="test-button danger"
-            onClick={() => handleButtonClick("test-button-4")}
+          </InteractiveButton>
+
+          <InteractiveButton
+            id="logout-btn"
+            color="danger"
+            icon={faSignOutAlt}
+            username={analytics.username}
+            onClickSuccess={handleButtonClick}
           >
             Logout
-          </button>
+          </InteractiveButton>
         </div>
       </div>
 

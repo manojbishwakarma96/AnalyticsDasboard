@@ -4,7 +4,7 @@ const API_URL = "http://localhost:3000";
 // Get all analytics data
 export const getAnalyticsData = async () => {
   try {
-    const response = await fetch(`${API_URL}/analytics`);
+    const response = await fetch(`${API_URL}/analytics-data`);
     if (!response.ok) {
       throw new Error("Failed to fetch analytics data");
     }
@@ -12,6 +12,27 @@ export const getAnalyticsData = async () => {
   } catch (error) {
     console.error("Error fetching analytics data:", error);
     throw error;
+  }
+};
+
+// Get available routes from backend
+export const getAvailableRoutes = async () => {
+  try {
+    const response = await fetch(`${API_URL}/routes`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch available routes");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching available routes:", error);
+    // Return default routes if unable to fetch from backend
+    return {
+      routes: [
+        { path: "/hello", name: "Home", icon: "home" },
+        { path: "/about", name: "About", icon: "info-circle" },
+        { path: "/analytics", name: "Analytics", icon: "chart-line" },
+      ],
+    };
   }
 };
 

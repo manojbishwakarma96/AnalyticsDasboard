@@ -45,6 +45,61 @@ const sendToGoogleAnalytics = async (eventName, params = {}) => {
   }
 };
 
+// Get available routes for the frontend navigation
+router.get("/routes", async (req, res) => {
+  try {
+    // Send a list of available routes with metadata
+    const availableRoutes = [
+      {
+        path: "/hello",
+        name: "Home",
+        icon: "home",
+        description: "Dashboard home page",
+      },
+      {
+        path: "/about",
+        name: "About",
+        icon: "info-circle",
+        description: "About this application",
+      },
+      {
+        path: "/analytics-dashboard",
+        name: "Analytics",
+        icon: "chart-line",
+        description: "View analytics data",
+      },
+      {
+        path: "/reports",
+        name: "Reports",
+        icon: "list",
+        description: "View detailed reports",
+      },
+      {
+        path: "/settings",
+        name: "Settings",
+        icon: "cog",
+        description: "Application settings",
+      },
+    ];
+
+    // Log the request to analytics
+    await sendToGoogleAnalytics("route_list_view", {
+      route_count: availableRoutes.length,
+    });
+
+    res.json({
+      routes: availableRoutes,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Error getting routes:", error);
+    res.status(500).json({
+      error: "Failed to retrieve routes",
+      message: error.message,
+    });
+  }
+});
+
 // Track analytics for page visits and log Google Analytics events
 router.get("/hello", trackAnalytics, async (req, res) => {
   await sendToGoogleAnalytics("page_view", { page_location: "/hello" });
@@ -56,8 +111,26 @@ router.get("/about", trackAnalytics, async (req, res) => {
   res.send("About Us");
 });
 
-// Route to view analytics data from MongoDB
-router.get("/analytics", getAnalytics);
+// Add routes for the additional pages in the navigation
+router.get("/analytics-dashboard", trackAnalytics, async (req, res) => {
+  await sendToGoogleAnalytics("page_view", {
+    page_location: "/analytics-dashboard",
+  });
+  res.send("Analytics Dashboard");
+});
+
+router.get("/reports", trackAnalytics, async (req, res) => {
+  await sendToGoogleAnalytics("page_view", { page_location: "/reports" });
+  res.send("Reports Page");
+});
+
+router.get("/settings", trackAnalytics, async (req, res) => {
+  await sendToGoogleAnalytics("page_view", { page_location: "/settings" });
+  res.send("Settings Page");
+});
+
+// Route to view analytics data from MongoDB (renamed to avoid conflict)
+router.get("/analytics-data", getAnalytics);
 
 // Button click tracking routes
 router.post("/button-clicks", async (req, res) => {
