@@ -3,8 +3,6 @@ import {
   getAnalyticsData,
   trackVisit,
   trackButtonClick,
-  getButtonClickAnalytics,
-  storeButtonClick,
 } from "../services/api";
 import "./Dashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -28,7 +26,6 @@ const Dashboard = () => {
     timestamps: [],
   });
 
-  const [buttonClicks, setButtonClicks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,9 +41,6 @@ const Dashboard = () => {
     try {
       setRefreshing(true);
 
-      // Track a page visit to analytics dashboard
-      await trackVisit("/hello");
-
       // Fetch analytics data
       const data = await getAnalyticsData();
       setAnalytics({
@@ -54,10 +48,6 @@ const Dashboard = () => {
         totalHits: data.totalHits || 0,
         timestamps: data.timestamps || [],
       });
-
-      // Fetch button click data (simulated)
-      const clickData = await getButtonClickAnalytics();
-      setButtonClicks(clickData || []);
 
       // Backend connected successfully
       setBackendStatus({
@@ -94,19 +84,11 @@ const Dashboard = () => {
   // Handle button click
   const handleButtonClick = async (buttonId) => {
     try {
-      await trackButtonClick(buttonId, analytics.username);
+      // Track the button click by calling the /hello endpoint
+      await trackButtonClick(buttonId);
 
-      // Store click in localStorage for session persistence
-      const newClick = {
-        buttonId,
-        username: analytics.username,
-        timestamp: new Date().toISOString(),
-      };
-
-      storeButtonClick(newClick);
-
-      // Update local state to show the click immediately
-      setButtonClicks((prevClicks) => [newClick, ...prevClicks]);
+      // Refresh the analytics data to show the updated hits
+      fetchData();
     } catch (err) {
       console.error("Error tracking button click:", err);
       setError(
@@ -263,24 +245,17 @@ const Dashboard = () => {
           <h2>
             <FontAwesomeIcon icon={faMousePointer} /> Button Click Analytics
           </h2>
-          <div className="button-analytics">
-            {buttonClicks.length > 0 ? (
-              <ul className="button-click-list">
-                {buttonClicks.map((click, index) => (
-                  <li key={index} className="button-click-item">
-                    <div className="click-badge">{click.buttonId}</div>
-                    <div className="click-details">
-                      <span className="click-user">{click.username}</span>
-                      <span className="click-time">
-                        {formatTimestamp(click.timestamp)}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="no-data">No button click data available</p>
-            )}
+          <div className="analytics-info">
+            <div className="info-item">
+              <span className="info-label">
+                Button Clicks (included in total hits):
+              </span>
+              <span className="info-value">{analytics.totalHits}</span>
+            </div>
+            <p className="helper-text">
+              Each button click is tracked as a page visit via the /hello
+              endpoint
+            </p>
           </div>
         </div>
       </div>
@@ -288,7 +263,7 @@ const Dashboard = () => {
       <div className="test-section">
         <h2>Test Button Click Tracking</h2>
         <p className="helper-text">
-          Each button click is tracked using the /hello API endpoint
+          Each button click will increase the total hit count
         </p>
         <div className="button-container">
           <button

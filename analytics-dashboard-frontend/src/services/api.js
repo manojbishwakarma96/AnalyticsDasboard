@@ -15,7 +15,7 @@ export const getAnalyticsData = async () => {
   }
 };
 
-// Track page visit - this logs data to the analytics database
+// Track page visit to specified endpoint
 export const trackVisit = async (pagePath = "/hello") => {
   try {
     const response = await fetch(`${API_URL}${pagePath}`);
@@ -29,27 +29,16 @@ export const trackVisit = async (pagePath = "/hello") => {
   }
 };
 
-// Simulate button click tracking using existing endpoints
-export const trackButtonClick = async (buttonId, username = "guest") => {
+// Track button click by recording a visit to /hello endpoint
+export const trackButtonClick = async (buttonId) => {
   try {
-    // Using the /hello endpoint to record a visit that represents a button click
-    // This effectively logs an analytics entry for each button click
-    await fetch(`${API_URL}/hello`);
-
-    // For now, we'll simulate this with client-side data
-    // Since backend doesn't have a dedicated button click endpoint yet
-    const simulatedResponse = {
-      success: true,
-      message: "Button click tracked via /hello endpoint",
-      data: {
-        buttonId,
-        username,
-        timestamp: new Date().toISOString(),
-      },
-    };
-
-    console.log(`Button click tracked: ${buttonId} by ${username}`);
-    return simulatedResponse;
+    // Using the /hello endpoint to record a visit
+    const response = await fetch(`${API_URL}/hello`);
+    if (!response.ok) {
+      throw new Error("Failed to track button click");
+    }
+    console.log(`Button click tracked: ${buttonId}`);
+    return await response.text();
   } catch (error) {
     console.error("Error recording button click:", error);
     throw error;
