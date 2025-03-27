@@ -17,6 +17,8 @@ import {
   faExclamationTriangle,
   faServer,
   faCheckCircle,
+  faHome,
+  faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 
 const Dashboard = () => {
@@ -34,6 +36,8 @@ const Dashboard = () => {
     connected: false,
     lastChecked: null,
   });
+  const [activeNavItem, setActiveNavItem] = useState("/hello");
+  const [navResponse, setNavResponse] = useState("");
 
   // Fetch analytics data
   const fetchData = async () => {
@@ -90,7 +94,7 @@ const Dashboard = () => {
   // Handle button click
   const handleButtonClick = async (buttonId) => {
     try {
-      const result = await trackButtonClick(buttonId, analytics.username);
+      await trackButtonClick(buttonId, analytics.username);
 
       // Store click in localStorage for session persistence
       const newClick = {
@@ -108,6 +112,21 @@ const Dashboard = () => {
       setError(
         "Failed to track button click. Please make sure your backend is running."
       );
+    }
+  };
+
+  // Handle navigation to backend endpoints
+  const handleNavClick = async (endpoint) => {
+    try {
+      setActiveNavItem(endpoint);
+      setNavResponse("Loading...");
+      const response = await trackVisit(endpoint);
+      setNavResponse(response);
+      // Refresh analytics data after navigation
+      fetchData();
+    } catch (err) {
+      console.error(`Error navigating to ${endpoint}:`, err);
+      setNavResponse(`Error: Could not connect to ${endpoint}`);
     }
   };
 
@@ -171,6 +190,28 @@ const Dashboard = () => {
           <FontAwesomeIcon icon={faExclamationTriangle} /> {error}
         </div>
       )}
+
+      <nav className="backend-nav">
+        <div className="nav-title">Backend Navigation:</div>
+        <ul className="nav-items">
+          <li
+            className={activeNavItem === "/hello" ? "active" : ""}
+            onClick={() => handleNavClick("/hello")}
+          >
+            <FontAwesomeIcon icon={faHome} /> /hello
+          </li>
+          <li
+            className={activeNavItem === "/about" ? "active" : ""}
+            onClick={() => handleNavClick("/about")}
+          >
+            <FontAwesomeIcon icon={faInfoCircle} /> /about
+          </li>
+        </ul>
+        <div className="nav-response">
+          <div className="response-label">Response:</div>
+          <div className="response-content">{navResponse}</div>
+        </div>
+      </nav>
 
       <div className="dashboard-container">
         <div className="dashboard-card">

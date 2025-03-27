@@ -78,6 +78,78 @@
   cursor: not-allowed;
 }
 
+/* Backend Navigation */
+.backend-nav {
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-title {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.nav-items {
+  display: flex;
+  list-style-type: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+  gap: 10px;
+}
+
+.nav-items li {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ecf0f1;
+}
+
+.nav-items li:hover {
+  background-color: #e0e6ed;
+}
+
+.nav-items li.active {
+  background-color: #3498db;
+  color: white;
+}
+
+.nav-response {
+  background-color: #fff;
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid #e0e6ed;
+}
+
+.response-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  margin-bottom: 8px;
+}
+
+.response-content {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
 /* Card Layout */
 .dashboard-container {
   display: grid;
@@ -351,24 +423,28 @@
 
 /* Custom Scrollbar */
 .timestamp-list::-webkit-scrollbar,
-.button-click-list::-webkit-scrollbar {
+.button-click-list::-webkit-scrollbar,
+.response-content::-webkit-scrollbar {
   width: 8px;
 }
 
 .timestamp-list::-webkit-scrollbar-track,
-.button-click-list::-webkit-scrollbar-track {
+.button-click-list::-webkit-scrollbar-track,
+.response-content::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 10px;
 }
 
 .timestamp-list::-webkit-scrollbar-thumb,
-.button-click-list::-webkit-scrollbar-thumb {
+.button-click-list::-webkit-scrollbar-thumb,
+.response-content::-webkit-scrollbar-thumb {
   background: #cbd5e0;
   border-radius: 10px;
 }
 
 .timestamp-list::-webkit-scrollbar-thumb:hover,
-.button-click-list::-webkit-scrollbar-thumb:hover {
+.button-click-list::-webkit-scrollbar-thumb:hover,
+.response-content::-webkit-scrollbar-thumb:hover {
   background: #a0aec0;
 }
 
@@ -392,6 +468,10 @@
   
   .refresh-button {
     align-self: stretch;
+  }
+  
+  .nav-items {
+    flex-direction: column;
   }
   
   .button-container {
