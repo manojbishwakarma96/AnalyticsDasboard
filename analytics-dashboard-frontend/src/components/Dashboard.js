@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  getAnalyticsData,
-  trackVisit,
-  trackButtonClick,
-  getButtonClickAnalytics,
-} from "../services/api";
+import { getAnalyticsData, getButtonClickAnalytics } from "../services/api";
 import "./Dashboard.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -16,8 +11,6 @@ import {
   faExclamationTriangle,
   faServer,
   faCheckCircle,
-  faHome,
-  faInfoCircle,
   faPieChart,
   faChartBar,
   faCog,
@@ -46,8 +39,7 @@ const Dashboard = () => {
     connected: false,
     lastChecked: null,
   });
-  const [activeNavItem, setActiveNavItem] = useState("/hello");
-  const [navResponse, setNavResponse] = useState("");
+  const [activeNavItem, setActiveNavItem] = useState("/analytics");
 
   // Fetch analytics data
   const fetchData = async () => {
@@ -188,18 +180,9 @@ const Dashboard = () => {
             <VisitsLineChart timestamps={analytics.timestamps || []} />
           </div>
         </div>
-
-        {/* Button Clicks Pie Chart */}
-        <div className="chart-card">
-          <h2>
-            <FontAwesomeIcon icon={faPieChart} /> Button Click Distribution
-          </h2>
-          <div className="chart-container">
-            <ButtonClicksPieChart buttonClicks={buttonClicks || []} />
-          </div>
-        </div>
       </div>
 
+      {/* Dashboard Cards Container */}
       <div className="dashboard-container">
         <div className="dashboard-card">
           <h2>
@@ -260,7 +243,7 @@ const Dashboard = () => {
                   </span>
                 </div>
                 <ul className="button-click-list">
-                  {buttonClicks.map((click, index) => (
+                  {buttonClicks.slice(0, 5).map((click, index) => (
                     <li key={index} className="button-click-item">
                       <div className="click-badge">{click.buttonId}</div>
                       <div className="click-details">
@@ -272,6 +255,13 @@ const Dashboard = () => {
                     </li>
                   ))}
                 </ul>
+                {buttonClicks.length > 5 && (
+                  <div className="view-more-link">
+                    <a href="#" onClick={(e) => e.preventDefault()}>
+                      View all {buttonClicks.length} clicks
+                    </a>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="no-data">No button click data available</p>
@@ -280,52 +270,172 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="test-section">
-        <h2>Enhanced Button Click Tracking</h2>
-        <p className="helper-text">
-          Each button click is tracked with its ID, username, and timestamp. Now
-          with visual feedback!
-        </p>
-        <div className="button-container">
-          <InteractiveButton
-            id="dashboard-btn"
-            color="primary"
-            icon={faTachometerAlt}
-            username={analytics.username}
-            onClickSuccess={handleButtonClick}
-          >
-            Dashboard
-          </InteractiveButton>
+      {/* Button Analytics Section - Side by Side */}
+      <div className="button-analytics-section">
+        {/* Button Click Distribution Chart */}
+        <div className="chart-card button-distribution">
+          <h2>
+            <FontAwesomeIcon icon={faPieChart} /> Button Click Distribution
+          </h2>
+          <div className="chart-container">
+            <ButtonClicksPieChart buttonClicks={buttonClicks || []} />
+          </div>
+        </div>
 
-          <InteractiveButton
-            id="reports-btn"
-            color="success"
-            icon={faList}
-            username={analytics.username}
-            onClickSuccess={handleButtonClick}
-          >
-            Reports
-          </InteractiveButton>
+        {/* Button Click Tracking Cards */}
+        <div className="test-section button-tracking">
+          <h2>
+            <FontAwesomeIcon icon={faMousePointer} /> Button Click Tracking
+          </h2>
+          <p className="helper-text">
+            Track user interactions with beautiful, interactive cards. Each
+            click is recorded with unique identifiers and timestamps.
+          </p>
+          <div className="button-container">
+            <div className="action-card primary">
+              <div className="card-header">
+                <FontAwesomeIcon
+                  icon={faTachometerAlt}
+                  className="card-header-icon"
+                />
+                <h3>Dashboard</h3>
+              </div>
+              <div className="card-body">
+                <p className="card-description">
+                  Access analytics dashboard with comprehensive metrics and data
+                  visualization.
+                </p>
+                <InteractiveButton
+                  id="dashboard-btn"
+                  color="primary"
+                  icon={faTachometerAlt}
+                  username={analytics.username}
+                  onClickSuccess={handleButtonClick}
+                >
+                  Access Dashboard
+                </InteractiveButton>
+              </div>
+              <div className="card-footer">
+                <div className="stats-count">
+                  <span>Popularity:</span>
+                  <span className="count">
+                    {
+                      buttonClicks.filter(
+                        (click) => click.buttonId === "dashboard-btn"
+                      ).length
+                    }{" "}
+                    clicks
+                  </span>
+                </div>
+              </div>
+            </div>
 
-          <InteractiveButton
-            id="settings-btn"
-            color="warning"
-            icon={faCog}
-            username={analytics.username}
-            onClickSuccess={handleButtonClick}
-          >
-            Settings
-          </InteractiveButton>
+            <div className="action-card success">
+              <div className="card-header">
+                <FontAwesomeIcon icon={faList} className="card-header-icon" />
+                <h3>Reports</h3>
+              </div>
+              <div className="card-body">
+                <p className="card-description">
+                  Generate detailed reports and export analytics data for your
+                  presentations.
+                </p>
+                <InteractiveButton
+                  id="reports-btn"
+                  color="success"
+                  icon={faList}
+                  username={analytics.username}
+                  onClickSuccess={handleButtonClick}
+                >
+                  Generate Reports
+                </InteractiveButton>
+              </div>
+              <div className="card-footer">
+                <div className="stats-count">
+                  <span>Popularity:</span>
+                  <span className="count">
+                    {
+                      buttonClicks.filter(
+                        (click) => click.buttonId === "reports-btn"
+                      ).length
+                    }{" "}
+                    clicks
+                  </span>
+                </div>
+              </div>
+            </div>
 
-          <InteractiveButton
-            id="logout-btn"
-            color="danger"
-            icon={faSignOutAlt}
-            username={analytics.username}
-            onClickSuccess={handleButtonClick}
-          >
-            Logout
-          </InteractiveButton>
+            <div className="action-card warning">
+              <div className="card-header">
+                <FontAwesomeIcon icon={faCog} className="card-header-icon" />
+                <h3>Settings</h3>
+              </div>
+              <div className="card-body">
+                <p className="card-description">
+                  Configure your analytics preferences and account settings.
+                </p>
+                <InteractiveButton
+                  id="settings-btn"
+                  color="warning"
+                  icon={faCog}
+                  username={analytics.username}
+                  onClickSuccess={handleButtonClick}
+                >
+                  Adjust Settings
+                </InteractiveButton>
+              </div>
+              <div className="card-footer">
+                <div className="stats-count">
+                  <span>Popularity:</span>
+                  <span className="count">
+                    {
+                      buttonClicks.filter(
+                        (click) => click.buttonId === "settings-btn"
+                      ).length
+                    }{" "}
+                    clicks
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="action-card danger">
+              <div className="card-header">
+                <FontAwesomeIcon
+                  icon={faSignOutAlt}
+                  className="card-header-icon"
+                />
+                <h3>Logout</h3>
+              </div>
+              <div className="card-body">
+                <p className="card-description">
+                  Securely sign out from your analytics dashboard session.
+                </p>
+                <InteractiveButton
+                  id="logout-btn"
+                  color="danger"
+                  icon={faSignOutAlt}
+                  username={analytics.username}
+                  onClickSuccess={handleButtonClick}
+                >
+                  Sign Out
+                </InteractiveButton>
+              </div>
+              <div className="card-footer">
+                <div className="stats-count">
+                  <span>Popularity:</span>
+                  <span className="count">
+                    {
+                      buttonClicks.filter(
+                        (click) => click.buttonId === "logout-btn"
+                      ).length
+                    }{" "}
+                    clicks
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
