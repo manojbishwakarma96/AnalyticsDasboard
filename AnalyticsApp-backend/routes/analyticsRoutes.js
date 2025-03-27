@@ -5,6 +5,10 @@ const {
   trackAnalytics,
   getAnalytics,
 } = require("../controllers/analyticsController");
+const {
+  trackButtonClick,
+  getButtonClicks,
+} = require("../controllers/buttonClickController");
 
 // Google Analytics 4 Measurement ID & API Secret
 const measurement_id = "G-3N37LZHLB8"; // Replace with your GA4 Measurement ID
@@ -54,5 +58,24 @@ router.get("/about", trackAnalytics, async (req, res) => {
 
 // Route to view analytics data from MongoDB
 router.get("/analytics", getAnalytics);
+
+// Button click tracking routes
+router.post("/button-clicks", async (req, res) => {
+  try {
+    // Track the button click in MongoDB
+    await trackButtonClick(req, res);
+
+    // Also send to Google Analytics if desired
+    await sendToGoogleAnalytics("button_click", {
+      button_id: req.body.buttonId,
+      username: req.body.username || "Guest",
+    });
+  } catch (error) {
+    console.error("Error in button click tracking:", error);
+  }
+});
+
+// Get all button clicks
+router.get("/button-clicks", getButtonClicks);
 
 module.exports = router;

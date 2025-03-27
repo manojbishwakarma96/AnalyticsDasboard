@@ -18,7 +18,12 @@ import {
   faCheckCircle,
   faHome,
   faInfoCircle,
+  faPieChart,
+  faChartBar,
 } from "@fortawesome/free-solid-svg-icons";
+import VisitsLineChart from "./charts/VisitsLineChart";
+import ButtonClicksPieChart from "./charts/ButtonClicksPieChart";
+import StatisticsCards from "./StatisticsCards";
 
 const Dashboard = () => {
   const [analytics, setAnalytics] = useState({
@@ -200,6 +205,31 @@ const Dashboard = () => {
           <div className="response-content">{navResponse}</div>
         </div>
       </nav>
+
+      {/* Statistics Cards Section */}
+      <StatisticsCards analytics={analytics} buttonClicks={buttonClicks} />
+
+      <div className="charts-container">
+        {/* Visits Line Chart */}
+        <div className="chart-card">
+          <h2>
+            <FontAwesomeIcon icon={faChartBar} /> Visits Over Time
+          </h2>
+          <div className="chart-container">
+            <VisitsLineChart timestamps={analytics.timestamps || []} />
+          </div>
+        </div>
+
+        {/* Button Clicks Pie Chart */}
+        <div className="chart-card">
+          <h2>
+            <FontAwesomeIcon icon={faPieChart} /> Button Click Distribution
+          </h2>
+          <div className="chart-container">
+            <ButtonClicksPieChart buttonClicks={buttonClicks || []} />
+          </div>
+        </div>
+      </div>
 
       <div className="dashboard-container">
         <div className="dashboard-card">

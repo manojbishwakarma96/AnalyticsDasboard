@@ -29,60 +29,47 @@ export const trackVisit = async (pagePath = "/hello") => {
   }
 };
 
-// Track button click with detailed information
+// Track button click with detailed information, storing in the backend
 export const trackButtonClick = async (buttonId, username = "Guest") => {
   try {
-    // Track the click in our storage
-    storeButtonClick({
-      buttonId,
-      username,
-      timestamp: new Date().toISOString(),
+    // Send button click data to backend API
+    const response = await fetch(`${API_URL}/button-clicks`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        buttonId,
+        username,
+        timestamp: new Date().toISOString(),
+      }),
     });
 
-    // Also record a visit to the /hello endpoint to keep the hit count accurate
-    const response = await fetch(`${API_URL}/hello`);
     if (!response.ok) {
       throw new Error("Failed to track button click");
     }
 
-    console.log(`Button click tracked: ${buttonId} by ${username}`);
-    return {
-      success: true,
-      message: "Button click tracked",
-    };
+    console.log(`Button click tracked on backend: ${buttonId} by ${username}`);
+    return await response.json();
   } catch (error) {
     console.error("Error recording button click:", error);
     throw error;
   }
 };
 
-// Get button click analytics from localStorage
+// Get button click analytics from backend
 export const getButtonClickAnalytics = async () => {
   try {
-    // Get button clicks from localStorage
-    const storedClicks = JSON.parse(
-      localStorage.getItem("buttonClicks") || "[]"
-    );
+    // Fetch button clicks from backend API
+    const response = await fetch(`${API_URL}/button-clicks`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch button click analytics");
+    }
 
-    // Sort by timestamp, most recent first
-    return storedClicks.sort(
-      (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-    );
+    const result = await response.json();
+    return result.data || [];
   } catch (error) {
     console.error("Error fetching button click analytics:", error);
     return []; // Return empty array on error
-  }
-};
-
-// Store button click in local storage for session persistence
-export const storeButtonClick = (clickData) => {
-  try {
-    const existingClicks = JSON.parse(
-      localStorage.getItem("buttonClicks") || "[]"
-    );
-    existingClicks.unshift(clickData); // Add to beginning of array
-    localStorage.setItem("buttonClicks", JSON.stringify(existingClicks));
-  } catch (error) {
-    console.error("Error storing button click:", error);
   }
 };
