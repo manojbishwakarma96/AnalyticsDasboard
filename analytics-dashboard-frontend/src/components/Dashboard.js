@@ -108,39 +108,52 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard">
+    <div className="dashboard" role="main">
+      {/* Skip to main content link for screen readers */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
       {/* Top Navigation Bar */}
-      <header className="dashboard-header">
+      <header className="dashboard-header" role="banner">
         <div className="logo-container">
           <FontAwesomeIcon
             icon={faTachometerAlt}
             size="lg"
             className="logo-icon"
+            aria-hidden="true"
           />
           <h1>Analytics Dashboard</h1>
         </div>
-        <div className="navigation-menu">
+        <nav className="navigation-menu" role="navigation" aria-label="Main navigation">
           <button
             className={`nav-button ${activePage === "home" ? "active" : ""}`}
             onClick={() => handleNavigation("home")}
+            aria-current={activePage === "home" ? "page" : undefined}
+            aria-label="Home page"
           >
-            <FontAwesomeIcon icon={faHome} /> Home
+            <FontAwesomeIcon icon={faHome} aria-hidden="true" /> Home
           </button>
           <button
             className={`nav-button ${activePage === "about" ? "active" : ""}`}
             onClick={() => handleNavigation("about")}
+            aria-current={activePage === "about" ? "page" : undefined}
+            aria-label="About page"
           >
-            <FontAwesomeIcon icon={faInfoCircle} /> About
+            <FontAwesomeIcon icon={faInfoCircle} aria-hidden="true" /> About
           </button>
-        </div>
-        <div className="dashboard-controls">
+        </nav>
+        <div className="dashboard-controls" role="toolbar" aria-label="Dashboard controls">
           <div
             className={`backend-status ${
               backendConnected ? "connected" : "disconnected"
             }`}
+            role="status"
+            aria-live="polite"
           >
             <FontAwesomeIcon
               icon={backendConnected ? faCheckCircle : faExclamationTriangle}
+              aria-hidden="true"
             />
             <span>{backendConnected ? "Connected" : "Disconnected"}</span>
           </div>
@@ -148,15 +161,16 @@ const Dashboard = () => {
             className="refresh-button"
             onClick={handleRefresh}
             disabled={refreshing}
+            aria-label={refreshing ? "Refreshing data..." : "Refresh data"}
           >
-            <FontAwesomeIcon icon={faRefresh} spin={refreshing} />
+            <FontAwesomeIcon icon={faRefresh} spin={refreshing} aria-hidden="true" />
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
         </div>
       </header>
 
       {/* Status info bar */}
-      <div className="status-bar">
+      <div className="status-bar" role="status" aria-live="polite">
         <div className="status-info">
           <span className="status-label">Last updated:</span>
           <span className="status-value">
@@ -164,50 +178,50 @@ const Dashboard = () => {
           </span>
         </div>
         {error && (
-          <div className="error-message">
-            <FontAwesomeIcon icon={faExclamationTriangle} /> {error}
+          <div className="error-message" role="alert">
+            <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" /> {error}
           </div>
         )}
       </div>
 
       {/* Main content area */}
-      <main className="dashboard-content">
+      <main id="main-content" className="dashboard-content" tabIndex="-1">
         {/* Summary Cards Row */}
-        <div className="summary-cards">
+        <div className="summary-cards" role="region" aria-label="Dashboard summary">
           {/* User Information Card */}
-          <div className="summary-card">
+          <div className="summary-card" role="article">
             <div className="card-icon-container">
-              <FontAwesomeIcon icon={faUser} className="card-icon" />
+              <FontAwesomeIcon icon={faUser} className="card-icon" aria-hidden="true" />
             </div>
             <div className="card-content">
-              <h3>User</h3>
-              <div className="card-value">
+              <h2>User</h2>
+              <div className="card-value" aria-label="Current user">
                 {analyticsData?.username || "Guest"}
               </div>
             </div>
           </div>
 
           {/* Total Hits Card */}
-          <div className="summary-card">
+          <div className="summary-card" role="article">
             <div className="card-icon-container accent-blue">
-              <FontAwesomeIcon icon={faChartLine} className="card-icon" />
+              <FontAwesomeIcon icon={faChartLine} className="card-icon" aria-hidden="true" />
             </div>
             <div className="card-content">
-              <h3>Total Hits</h3>
-              <div className="card-value highlight">
+              <h2>Total Hits</h2>
+              <div className="card-value highlight" aria-label="Total number of hits">
                 {analyticsData?.hits || 0}
               </div>
             </div>
           </div>
 
           {/* Button Clicks Card */}
-          <div className="summary-card">
+          <div className="summary-card" role="article">
             <div className="card-icon-container accent-orange">
-              <FontAwesomeIcon icon={faMousePointer} className="card-icon" />
+              <FontAwesomeIcon icon={faMousePointer} className="card-icon" aria-hidden="true" />
             </div>
             <div className="card-content">
-              <h3>Button Clicks</h3>
-              <div className="card-value highlight">
+              <h2>Button Clicks</h2>
+              <div className="card-value highlight" aria-label="Total number of button clicks">
                 {buttonClicks?.length || 0}
               </div>
             </div>
@@ -216,10 +230,10 @@ const Dashboard = () => {
 
         {/* Main Dashboard Grid */}
         <div className="dashboard-grid">
-          <div className="dashboard-card recent-visits">
+          <div className="dashboard-card recent-visits" role="region" aria-label="Recent visits">
             <div className="card-header">
               <h2>
-                <FontAwesomeIcon icon={faClock} /> Recent Visits
+                <FontAwesomeIcon icon={faClock} aria-hidden="true" /> Recent Visits
               </h2>
             </div>
             <div className="card-body">
@@ -243,10 +257,10 @@ const Dashboard = () => {
           </div>
 
           {/* Button Click Analytics Card */}
-          <div className="dashboard-card button-clicks">
+          <div className="dashboard-card button-clicks" role="region" aria-label="Button click analytics">
             <div className="card-header">
               <h2>
-                <FontAwesomeIcon icon={faMousePointer} /> Button Click Analytics
+                <FontAwesomeIcon icon={faMousePointer} aria-hidden="true" /> Button Click Analytics
               </h2>
             </div>
             <div className="card-body">
@@ -281,10 +295,10 @@ const Dashboard = () => {
           </div>
 
           {/* Button Click Distribution Chart */}
-          <div className="dashboard-card chart-card">
+          <div className="dashboard-card chart-card" role="region" aria-label="Button click distribution chart">
             <div className="card-header">
               <h2>
-                <FontAwesomeIcon icon={faChartLine} /> Button Click Distribution
+                <FontAwesomeIcon icon={faChartLine} aria-hidden="true" /> Button Click Distribution
               </h2>
             </div>
             <div className="card-body">
@@ -302,10 +316,10 @@ const Dashboard = () => {
         </div>
 
         {/* Interactive Buttons Section */}
-        <div className="interactive-section">
+        <div className="interactive-section" role="region" aria-label="Interactive buttons">
           <div className="section-header">
             <h2>
-              <FontAwesomeIcon icon={faMousePointer} /> Interactive Buttons
+              <FontAwesomeIcon icon={faMousePointer} aria-hidden="true" /> Interactive Buttons
             </h2>
             <p className="section-description">
               Click on these buttons to test the button click tracking feature.
@@ -314,10 +328,10 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="buttons-grid">
-            <div className="button-card">
+            <div className="button-card" role="article">
               <div className="card-header">
                 <h3>
-                  <FontAwesomeIcon icon={faDownload} /> Data Export
+                  <FontAwesomeIcon icon={faDownload} aria-hidden="true" /> Data Export
                 </h3>
               </div>
               <div className="card-body">
@@ -346,10 +360,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="button-card">
+            <div className="button-card" role="article">
               <div className="card-header">
                 <h3>
-                  <FontAwesomeIcon icon={faShareAlt} /> Share Report
+                  <FontAwesomeIcon icon={faShareAlt} aria-hidden="true" /> Share Report
                 </h3>
               </div>
               <div className="card-body">
@@ -378,10 +392,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="button-card">
+            <div className="button-card" role="article">
               <div className="card-header">
                 <h3>
-                  <FontAwesomeIcon icon={faChartLine} /> Generate Insights
+                  <FontAwesomeIcon icon={faChartLine} aria-hidden="true" /> Generate Insights
                 </h3>
               </div>
               <div className="card-body">
@@ -413,10 +427,10 @@ const Dashboard = () => {
 
           {/* Additional Button Row */}
           <div className="buttons-grid additional-buttons">
-            <div className="button-card">
+            <div className="button-card" role="article">
               <div className="card-header">
                 <h3>
-                  <FontAwesomeIcon icon={faFileAlt} /> Reports
+                  <FontAwesomeIcon icon={faFileAlt} aria-hidden="true" /> Reports
                 </h3>
               </div>
               <div className="card-body">
@@ -445,10 +459,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="button-card">
+            <div className="button-card" role="article">
               <div className="card-header">
                 <h3>
-                  <FontAwesomeIcon icon={faCog} /> Settings
+                  <FontAwesomeIcon icon={faCog} aria-hidden="true" /> Settings
                 </h3>
               </div>
               <div className="card-body">
@@ -477,10 +491,10 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="button-card">
+            <div className="button-card" role="article">
               <div className="card-header">
                 <h3>
-                  <FontAwesomeIcon icon={faSignOutAlt} /> Logout
+                  <FontAwesomeIcon icon={faSignOutAlt} aria-hidden="true" /> Logout
                 </h3>
               </div>
               <div className="card-body">
