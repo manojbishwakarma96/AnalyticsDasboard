@@ -7,7 +7,10 @@ require("dotenv").config();
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable CORS for all routes
+app.use(cors({
+  origin: 'http://localhost:3001',
+  credentials: true
+}));
 app.use(express.json()); // Parse JSON request bodies
 
 connectDB();
