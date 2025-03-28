@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   getAnalyticsData,
   getButtonClickAnalytics,
@@ -24,9 +24,10 @@ import {
   faSignOutAlt,
   faFileAlt,
 } from "@fortawesome/free-solid-svg-icons";
-import ButtonClicksPieChart from "./charts/ButtonClicksPieChart";
+import { ButtonClicksPieChartLazy } from "./LazyComponents";
 import InteractiveButton from "./InteractiveButton";
 import { CardSkeleton, TableRowSkeleton, ChartSkeleton } from "./Skeleton";
+import { useAnalyticsData, useButtonClickStats, useSortedVisits } from "../hooks/useAnalytics";
 
 const Dashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -38,18 +39,22 @@ const Dashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activePage, setActivePage] = useState("home");
 
-  const fetchData = async () => {
+  // Memoized data processing
+  const processedAnalytics = useAnalyticsData(analyticsData);
+  const buttonClickStats = useButtonClickStats(buttonClicks);
+  const sortedVisits = useSortedVisits(analyticsData?.visits);
+
+  const fetchData = useCallback(async () => {
     setRefreshing(true);
     try {
-      // Fetch analytics data
-      const data = await getAnalyticsData();
+      const [data, buttonData] = await Promise.all([
+        getAnalyticsData(),
+        getButtonClickAnalytics()
+      ]);
+      
       setAnalyticsData(data);
-      setBackendConnected(true);
-
-      // Fetch button click data
-      const buttonData = await getButtonClickAnalytics();
       setButtonClicks(buttonData);
-
+      setBackendConnected(true);
       setLastChecked(new Date());
       setError(null);
     } catch (err) {
@@ -62,38 +67,25 @@ const Dashboard = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleString();
-  };
-
-  const handleNavigation = async (page) => {
+  const handleNavigation = useCallback(async (page) => {
     setActivePage(page);
     try {
-      // Track the visit to the page
-      if (page === "home") {
-        await trackVisit("/hello");
-      } else if (page === "about") {
-        await trackVisit("/about");
-      }
-
-      // Refresh data after navigation
+      await trackVisit(`/${page}`);
       fetchData();
     } catch (err) {
       console.error(`Error navigating to ${page}:`, err);
     }
-  };
+  }, [fetchData]);
 
-  const handleButtonClick = (buttonId) => {
-    // Refresh data to show new button click
+  const handleButtonClick = useCallback((buttonId) => {
     fetchData();
-  };
+  }, [fetchData]);
 
   if (loading) {
     return (
@@ -140,6 +132,11 @@ const Dashboard = () => {
 
   const handleRefresh = () => {
     fetchData();
+  };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString();
   };
 
   return (
@@ -339,7 +336,7 @@ const Dashboard = () => {
             <div className="card-body">
               <div className="chart-container">
                 {buttonClicks && buttonClicks.length > 0 ? (
-                  <ButtonClicksPieChart buttonClicks={buttonClicks} />
+                  <ButtonClicksPieChartLazy buttonClicks={buttonClicks} />
                 ) : (
                   <div className="no-data">
                     Not enough data to generate chart
