@@ -31,7 +31,7 @@ import { useAnalyticsData, useButtonClickStats, useSortedVisits } from "../hooks
 
 const Dashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
-  const [buttonClicks, setButtonClicks] = useState([]);
+  const [buttonClicks, setButtonClicks] = useState({ data: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [backendConnected, setBackendConnected] = useState(false);
@@ -41,7 +41,7 @@ const Dashboard = () => {
 
   // Memoized data processing
   const processedAnalytics = useAnalyticsData(analyticsData);
-  const buttonClickStats = useButtonClickStats(buttonClicks);
+  const buttonClickStats = useButtonClickStats(buttonClicks.data);
   const sortedVisits = useSortedVisits(analyticsData?.visits);
 
   const fetchData = useCallback(async () => {
@@ -86,6 +86,104 @@ const Dashboard = () => {
   const handleButtonClick = useCallback((buttonId) => {
     fetchData();
   }, [fetchData]);
+
+  const renderAnalyticsSummary = () => {
+    if (!processedAnalytics) return null;
+
+    return (
+      <div className="analytics-summary">
+        <div className="summary-card">
+          <h3>Total Hits</h3>
+          <p className="stat-number">{processedAnalytics.totalHits}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Unique Endpoints</h3>
+          <p className="stat-number">{processedAnalytics.endpoints.length}</p>
+        </div>
+        <div className="summary-card">
+          <h3>Last Visit</h3>
+          <p className="stat-time">
+            {processedAnalytics.lastVisit?.toLocaleString() || 'No visits yet'}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderEndpointStats = () => {
+    if (!processedAnalytics?.endpoints) return null;
+
+    return (
+      <div className="endpoint-stats">
+        <h3>Endpoint Statistics</h3>
+        <div className="endpoint-list">
+          {processedAnalytics.endpoints.map((endpoint, index) => (
+            <div key={index} className="endpoint-item">
+              <span className="endpoint-path">{endpoint.endpoint}</span>
+              <span className="endpoint-hits">{endpoint.hits} hits</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderRecentVisits = () => {
+    if (!analyticsData || analyticsData.length === 0) {
+      return <p>No visits recorded yet.</p>;
+    }
+
+    // Get all timestamps from all endpoints, sort them by date
+    const allVisits = analyticsData.flatMap(endpoint => 
+      endpoint.timestamps.map(timestamp => ({
+        endpoint: endpoint.endpoint,
+        timestamp: new Date(timestamp)
+      }))
+    ).sort((a, b) => b.timestamp - a.timestamp);
+
+    // Take only the 5 most recent visits
+    const recentVisits = allVisits.slice(0, 5);
+
+    return (
+      <ul className="recent-visits-list">
+        {recentVisits.map((visit, index) => (
+          <li key={index} className="recent-visit-item">
+            <FontAwesomeIcon icon={faClock} className="visit-icon" aria-hidden="true" />
+            <span className="visit-endpoint">{visit.endpoint}</span>
+            <span className="visit-time">
+              {visit.timestamp.toLocaleString()}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const renderButtonClickStats = () => {
+    if (!buttonClicks?.data?.length) {
+      return <p>No button clicks recorded yet.</p>;
+    }
+
+    return (
+      <div className="button-clicks-stats">
+        <div className="total-clicks">
+          <h3>Total Clicks</h3>
+          <p className="stat-number">{buttonClicks.data.length}</p>
+        </div>
+        <div className="clicks-by-button">
+          <h3>Clicks by Button</h3>
+          <ul className="button-stats-list">
+            {Object.entries(buttonClickStats).map(([buttonId, count]) => (
+              <li key={buttonId} className="button-stat-item">
+                <span className="button-id">{buttonId}</span>
+                <span className="click-count">{count} clicks</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -138,6 +236,8 @@ const Dashboard = () => {
     const date = new Date(timestamp);
     return date.toLocaleString();
   };
+
+  const buttonClicksCount = buttonClicks?.data?.length || 0;
 
   return (
     <div className="dashboard" role="main">
@@ -254,7 +354,7 @@ const Dashboard = () => {
             <div className="card-content">
               <h2>Button Clicks</h2>
               <div className="card-value highlight" aria-label="Total number of button clicks">
-                {buttonClicks?.length || 0}
+                {buttonClicksCount}
               </div>
             </div>
           </div>
@@ -270,25 +370,40 @@ const Dashboard = () => {
             </div>
             <div className="card-body">
               <div className="timestamps">
-                {analyticsData?.timestamps &&
-                analyticsData.timestamps.length > 0 ? (
-                  <ul className="timestamp-list">
-                    {analyticsData.timestamps.map((timestamp, index) => (
-                      <li key={index} className="timestamp-item">
-                        <span className="timestamp-value">
-                          {formatTimestamp(timestamp)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                {loading ? (
+                  <TableRowSkeleton count={5} />
                 ) : (
-                  <div className="no-data">No visit data available</div>
+                  renderRecentVisits()
                 )}
               </div>
             </div>
           </div>
 
-          {/* Button Click Analytics Card */}
+          {/* Analytics Summary Card */}
+          <div className="dashboard-card analytics-summary" role="region" aria-label="Analytics summary">
+            <div className="card-header">
+              <h2>
+                <FontAwesomeIcon icon={faChartLine} aria-hidden="true" /> Analytics Summary
+              </h2>
+            </div>
+            <div className="card-body">
+              {renderAnalyticsSummary()}
+            </div>
+          </div>
+
+          {/* Endpoint Statistics Card */}
+          <div className="dashboard-card endpoint-stats" role="region" aria-label="Endpoint statistics">
+            <div className="card-header">
+              <h2>
+                <FontAwesomeIcon icon={faChartLine} aria-hidden="true" /> Endpoint Statistics
+              </h2>
+            </div>
+            <div className="card-body">
+              {renderEndpointStats()}
+            </div>
+          </div>
+
+          {/* Button Clicks Analytics Card */}
           <div className="dashboard-card button-clicks" role="region" aria-label="Button click analytics">
             <div className="card-header">
               <h2>
@@ -296,33 +411,11 @@ const Dashboard = () => {
               </h2>
             </div>
             <div className="card-body">
-              <div className="button-analytics">
-                {buttonClicks && buttonClicks.length > 0 ? (
-                  <ul className="button-click-list">
-                    {buttonClicks.slice(0, 8).map((click, index) => (
-                      <li key={index} className="button-click-item">
-                        <div className="click-badge">{click.buttonId}</div>
-                        <div className="click-details">
-                          <span className="click-user">
-                            {click.username || "Guest"}
-                          </span>
-                          <span className="click-time">
-                            {formatTimestamp(click.timestamp)}
-                          </span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="no-data">No button click data available</div>
-                )}
-
-                {buttonClicks && buttonClicks.length > 8 && (
-                  <div className="view-more-link">
-                    <a href="#">View all {buttonClicks.length} button clicks</a>
-                  </div>
-                )}
-              </div>
+              {loading ? (
+                <TableRowSkeleton count={5} />
+              ) : (
+                renderButtonClickStats()
+              )}
             </div>
           </div>
 
@@ -335,8 +428,8 @@ const Dashboard = () => {
             </div>
             <div className="card-body">
               <div className="chart-container">
-                {buttonClicks && buttonClicks.length > 0 ? (
-                  <ButtonClicksPieChartLazy buttonClicks={buttonClicks} />
+                {buttonClicks && buttonClicks.data.length > 0 ? (
+                  <ButtonClicksPieChartLazy buttonClicks={buttonClicks.data} />
                 ) : (
                   <div className="no-data">
                     Not enough data to generate chart
@@ -383,7 +476,7 @@ const Dashboard = () => {
                   <span className="counter-label">Clicks:</span>
                   <span className="counter-value">
                     {
-                      buttonClicks.filter(
+                      buttonClicks.data.filter(
                         (click) => click.buttonId === "export-data-btn"
                       ).length
                     }
@@ -415,7 +508,7 @@ const Dashboard = () => {
                   <span className="counter-label">Clicks:</span>
                   <span className="counter-value">
                     {
-                      buttonClicks.filter(
+                      buttonClicks.data.filter(
                         (click) => click.buttonId === "share-report-btn"
                       ).length
                     }
@@ -447,7 +540,7 @@ const Dashboard = () => {
                   <span className="counter-label">Clicks:</span>
                   <span className="counter-value">
                     {
-                      buttonClicks.filter(
+                      buttonClicks.data.filter(
                         (click) => click.buttonId === "generate-insights-btn"
                       ).length
                     }
@@ -482,7 +575,7 @@ const Dashboard = () => {
                   <span className="counter-label">Clicks:</span>
                   <span className="counter-value">
                     {
-                      buttonClicks.filter(
+                      buttonClicks.data.filter(
                         (click) => click.buttonId === "reports-btn"
                       ).length
                     }
@@ -514,7 +607,7 @@ const Dashboard = () => {
                   <span className="counter-label">Clicks:</span>
                   <span className="counter-value">
                     {
-                      buttonClicks.filter(
+                      buttonClicks.data.filter(
                         (click) => click.buttonId === "settings-btn"
                       ).length
                     }
@@ -546,7 +639,7 @@ const Dashboard = () => {
                   <span className="counter-label">Clicks:</span>
                   <span className="counter-value">
                     {
-                      buttonClicks.filter(
+                      buttonClicks.data.filter(
                         (click) => click.buttonId === "logout-btn"
                       ).length
                     }
