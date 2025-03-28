@@ -1,44 +1,61 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 
 export const useAnalyticsData = (analyticsData) => {
-  const formattedData = useMemo(() => {
-    if (!analyticsData) return null;
+  return useMemo(() => {
+    if (!analyticsData || !Array.isArray(analyticsData)) return null;
     
+    // Process array of endpoint analytics
+    const totalHits = analyticsData.reduce((sum, item) => sum + item.hits, 0);
+    const allTimestamps = analyticsData.flatMap(item => item.timestamps);
+    const lastVisit = allTimestamps.length > 0 
+      ? new Date(Math.max(...allTimestamps.map(ts => new Date(ts))))
+      : null;
+
+    // Calculate visits per day across all endpoints
+    const visitsPerDay = allTimestamps.reduce((acc, timestamp) => {
+      const date = new Date(timestamp).toLocaleDateString();
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {});
+
     return {
-      username: analyticsData.username || 'Guest',
-      hits: analyticsData.hits || 0,
-      lastVisit: analyticsData.lastVisit ? new Date(analyticsData.lastVisit) : null,
-      visitsPerDay: analyticsData.visits?.reduce((acc, visit) => {
-        const date = new Date(visit.timestamp).toLocaleDateString();
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-      }, {}) || {}
+      endpoints: analyticsData.map(item => ({
+        endpoint: item.endpoint,
+        hits: item.hits,
+        timestamps: item.timestamps.map(ts => new Date(ts))
+      })),
+      totalHits,
+      lastVisit,
+      visitsPerDay
     };
   }, [analyticsData]);
-
-  return formattedData;
 };
 
 export const useButtonClickStats = (buttonClicks) => {
-  const stats = useMemo(() => {
-    if (!buttonClicks?.length) return {};
+  return useMemo(() => {
+    if (!buttonClicks?.data?.length) return {};
 
-    return buttonClicks.reduce((acc, click) => {
+    return buttonClicks.data.reduce((acc, click) => {
       const buttonId = click.buttonId;
       acc[buttonId] = (acc[buttonId] || 0) + 1;
       return acc;
     }, {});
   }, [buttonClicks]);
-
-  return stats;
 };
 
-export const useSortedVisits = (visits) => {
+export const useSortedVisits = (analyticsData) => {
   return useMemo(() => {
-    if (!visits?.length) return [];
+    if (!analyticsData || !Array.isArray(analyticsData)) return [];
     
-    return [...visits].sort((a, b) => 
-      new Date(b.timestamp) - new Date(a.timestamp)
+    // Get all timestamps from all endpoints with their endpoint info
+    const allVisits = analyticsData.flatMap(item => 
+      item.timestamps.map(timestamp => ({
+        endpoint: item.endpoint,
+        timestamp: new Date(timestamp)
+      }))
     );
-  }, [visits]);
+
+    // Sort by timestamp, most recent first
+    return allVisits.sort((a, b) => b.timestamp - a.timestamp);
+  }, [analyticsData]);
 };

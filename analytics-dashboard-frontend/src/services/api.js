@@ -29,7 +29,6 @@ export const getAvailableRoutes = async () => {
     return {
       routes: [
         { path: "/hello", name: "Home", icon: "home" },
-        { path: "/about", name: "About", icon: "info-circle" },
         { path: "/analytics", name: "Analytics", icon: "chart-line" },
       ],
     };
@@ -39,21 +38,25 @@ export const getAvailableRoutes = async () => {
 // Track page visit to specified endpoint
 export const trackVisit = async (pagePath = "/hello") => {
   try {
-    const response = await fetch(`${API_URL}${pagePath}`);
+    const response = await fetch(`${API_URL}${pagePath}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
     if (!response.ok) {
-      throw new Error(`Failed to track visit to ${pagePath}`);
+      throw new Error("Failed to track visit");
     }
     return await response.text();
   } catch (error) {
-    console.error(`Error tracking visit to ${pagePath}:`, error);
+    console.error("Error tracking visit:", error);
     throw error;
   }
 };
 
-// Track button click with detailed information, storing in the backend
+// Track button click with detailed information
 export const trackButtonClick = async (buttonId, username = "Guest") => {
   try {
-    // Send button click data to backend API
     const response = await fetch(`${API_URL}/button-clicks`, {
       method: "POST",
       headers: {
@@ -65,32 +68,26 @@ export const trackButtonClick = async (buttonId, username = "Guest") => {
         timestamp: new Date().toISOString(),
       }),
     });
-
     if (!response.ok) {
       throw new Error("Failed to track button click");
     }
-
-    console.log(`Button click tracked on backend: ${buttonId} by ${username}`);
     return await response.json();
   } catch (error) {
-    console.error("Error recording button click:", error);
+    console.error("Error tracking button click:", error);
     throw error;
   }
 };
 
-// Get button click analytics from backend
+// Get button click analytics
 export const getButtonClickAnalytics = async () => {
   try {
-    // Fetch button clicks from backend API
     const response = await fetch(`${API_URL}/button-clicks`);
     if (!response.ok) {
       throw new Error("Failed to fetch button click analytics");
     }
-
-    const result = await response.json();
-    return result.data || [];
+    return await response.json();
   } catch (error) {
     console.error("Error fetching button click analytics:", error);
-    return []; // Return empty array on error
+    throw error;
   }
 };
