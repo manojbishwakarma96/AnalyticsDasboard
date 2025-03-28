@@ -302,6 +302,42 @@
   flex-direction: column;
 }
 
+.recent-visits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recent-visit-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.recent-visit-item:hover {
+  background-color: #e9ecef;
+}
+
+.visit-icon {
+  color: #6c757d;
+  margin-right: 0.75rem;
+}
+
+.visit-endpoint {
+  font-weight: 500;
+  margin-right: 1rem;
+  flex: 1;
+}
+
+.visit-time {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
 /* Interactive Section */
 .interactive-section {
   background-color: #fff;
@@ -731,4 +767,126 @@
 
 .interactive-button.danger:hover {
   background-color: #c53030;
+}
+
+/* Analytics Summary Styles */
+.analytics-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.summary-card h3 {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.stat-time {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+/* Endpoint Statistics Styles */
+.endpoint-stats {
+  margin-top: 1.5rem;
+}
+
+.endpoint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.endpoint-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.endpoint-item:hover {
+  background-color: #e9ecef;
+}
+
+.endpoint-path {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.endpoint-hits {
+  color: #6c757d;
+  font-size: 0.875rem;
+  background-color: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
+}
+
+/* Button Click Statistics Styles */
+.button-clicks-stats {
+  padding: 1rem;
+}
+
+.total-clicks {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.total-clicks h3 {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.button-stats-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.button-stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: #f8f9fa;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.button-stat-item:hover {
+  background-color: #e9ecef;
+}
+
+.button-id {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.click-count {
+  color: #6c757d;
+  font-size: 0.875rem;
+  background-color: #e9ecef;
+  padding: 0.25rem 0.5rem;
+  border-radius: 1rem;
 }
