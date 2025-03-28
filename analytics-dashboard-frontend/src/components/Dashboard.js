@@ -26,6 +26,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import ButtonClicksPieChart from "./charts/ButtonClicksPieChart";
 import InteractiveButton from "./InteractiveButton";
+import { CardSkeleton, TableRowSkeleton, ChartSkeleton } from "./Skeleton";
 
 const Dashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -96,9 +97,43 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <FontAwesomeIcon icon={faSpinner} spin size="3x" />
-        <p>Loading analytics data...</p>
+      <div className="dashboard" role="main">
+        <header className="dashboard-header" role="banner">
+          <div className="logo-container">
+            <FontAwesomeIcon icon={faTachometerAlt} size="lg" className="logo-icon" aria-hidden="true" />
+            <h1>Analytics Dashboard</h1>
+          </div>
+        </header>
+        
+        <main className="dashboard-content">
+          <div className="summary-cards">
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+          
+          <div className="dashboard-grid">
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Recent Visits</h2>
+              </div>
+              <div className="card-body">
+                {[...Array(5)].map((_, i) => (
+                  <TableRowSkeleton key={i} />
+                ))}
+              </div>
+            </div>
+            
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Button Click Analytics</h2>
+              </div>
+              <div className="card-body">
+                <ChartSkeleton />
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
